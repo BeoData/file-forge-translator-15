@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TranslationResult } from "@/pages/Index";
 import CodePreview from "./CodePreview";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface TranslationResultsProps {
   result: TranslationResult;

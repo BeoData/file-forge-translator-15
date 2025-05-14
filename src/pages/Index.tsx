@@ -5,7 +5,7 @@ import TranslationSettings from "@/components/TranslationSettings";
 import TranslationResults from "@/components/TranslationResults";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProcessingModal } from "@/components/ProcessingModal";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { translateFile } from "@/lib/translator";
 
 export interface FileData {
@@ -56,48 +56,70 @@ const Index = () => {
   };
 
   const handleTranslate = async () => {
-    if (!file) return;
+    if (!file) {
+      toast({
+        variant: "destructive",
+        title: "No file selected",
+        description: "Please upload a file to translate"
+      });
+      return;
+    }
     
     try {
       setIsProcessing(true);
       setProgress(0);
       setCurrentChunk(0);
-      setTotalChunks(5); // Simulated for now, in a real app this would be calculated
+      
+      // Estimate number of chunks based on file size and settings
+      const estimatedChunks = Math.ceil(file.content.length / (settings.chunkSize * 1024));
+      setTotalChunks(estimatedChunks);
 
-      // Simulate progress for demo
-      const interval = setInterval(() => {
-        setCurrentChunk(prev => {
-          const next = prev + 1;
-          setProgress((next / 5) * 100);
-          return next;
-        });
-      }, 600);
+      // Create progress tracking callback for the translation process
+      const progressCallback = (progress: number, currentChunk: number, totalChunks: number) => {
+        setProgress(progress);
+        setCurrentChunk(currentChunk);
+        setTotalChunks(totalChunks);
+      };
 
-      // In a real implementation, this would call your translation API
-      // For demo, we'll simulate a delay and use pre-defined translation
-      setTimeout(() => {
-        clearInterval(interval);
-        
-        // Simulate translation completion
-        const result: TranslationResult = {
-          originalContent: file.content,
-          translatedContent: simulateTranslation(file.content, targetLanguage),
-          itemCount: 24,
-          translatedCount: 24,
-          processingTime: 1.24,
-          sourceLanguage: sourceLanguage === "auto" ? "en" : sourceLanguage,
-          targetLanguage
-        };
-        
-        setTranslationResult(result);
-        setIsProcessing(false);
-        setActiveTab("results");
+      // Start translation process using the actual file content
+      const translationOptions = {
+        sourceLanguage: sourceLanguage,
+        targetLanguage: targetLanguage,
+        preserveHtml: settings.preserveHtml,
+        translateComments: settings.translateComments,
+        chunkProcessing: settings.chunkProcessing,
+        service: settings.service,
+        apiKey: settings.apiKey,
+        apiEndpoint: settings.apiEndpoint
+      };
 
-        toast({
-          title: "Translation complete",
-          description: `Successfully translated ${result.translatedCount} out of ${result.itemCount} items.`
-        });
-      }, 3000);
+      // Call the translation function with the file content
+      const startTime = performance.now();
+      const translatedContent = await translateFile(file.content, translationOptions, progressCallback);
+      const endTime = performance.now();
+      
+      // Calculate processing time in seconds
+      const processingTime = ((endTime - startTime) / 1000).toFixed(2);
+      
+      // Create translation result with actual data
+      const result: TranslationResult = {
+        originalContent: file.content,
+        translatedContent,
+        itemCount: estimateItemCount(file.content),
+        translatedCount: estimateItemCount(translatedContent),
+        processingTime: parseFloat(processingTime),
+        sourceLanguage,
+        targetLanguage
+      };
+      
+      setTranslationResult(result);
+      setIsProcessing(false);
+      setActiveTab("results");
+
+      toast({
+        title: "Translation complete",
+        description: `Successfully translated ${result.translatedCount} out of ${result.itemCount} items.`
+      });
     } catch (error) {
       console.error("Translation failed:", error);
       setIsProcessing(false);
@@ -110,52 +132,12 @@ const Index = () => {
     }
   };
 
-  // Simulated translation for demo purposes
-  const simulateTranslation = (content: string, targetLang: string): string => {
-    // For demonstration, we'll return Serbian translation for PHP language file
-    // In a real app, this would call a translation API
-    if (targetLang === "sr") {
-      return `<?php
-
-return [
-    /*
-    |--------------------------------------------------------------------------
-    | Linije jezika za autentifikaciju
-    |--------------------------------------------------------------------------
-    |
-    | Sledeće linije jezika se koriste tokom autentifikacije za različite
-    | poruke koje treba da prikažemo korisniku. Možete ih slobodno modifikovati
-    | prema zahtevima vaše aplikacije.
-    |
-    */
-
-    'failed' => 'Ovi podaci se ne podudaraju sa našim zapisima.',
-    'password' => 'Navedena lozinka nije tačna.',
-    'throttle' => 'Previše pokušaja prijave. Pokušajte ponovo za :seconds sekundi.',
-
-    'welcome' => 'Dobrodošli u našu aplikaciju!',
-    'greeting' => 'Zdravo, :name!',
-    'profile' => [
-        'title' => 'Korisnički profil',
-        'description' => 'Upravljajte informacijama o svom profilu',
-    ],
-    
-    'buttons' => [
-        'save' => 'Sačuvaj promene',
-        'cancel' => 'Otkaži',
-        'delete' => '<i class="fa fa-trash"></i> Obriši',
-    ],
-    
-    'messages' => [
-        'success' => 'Operacija uspešno završena!',
-        'error' => 'Došlo je do greške. Molimo pokušajte ponovo.',
-        'warning' => 'Upozorenje: Ova radnja se ne može poništiti.',
-    ],
-];`;
-    } else {
-      // Return original content for other languages
-      return content;
-    }
+  // Helper function to estimate the number of translatable items in content
+  const estimateItemCount = (content: string): number => {
+    // A simple heuristic - count string literals which are likely to be translatable
+    const stringMatches = content.match(/'[^']+'/g) || [];
+    const doubleQuoteMatches = content.match(/"[^"]+"/g) || [];
+    return stringMatches.length + doubleQuoteMatches.length;
   };
 
   return (
