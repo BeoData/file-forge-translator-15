@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 
 interface ProcessingModalProps {
@@ -17,8 +17,22 @@ export const ProcessingModal = ({
 }: ProcessingModalProps) => {
   return (
     <Dialog open={isOpen} modal>
-      <DialogContent className="sm:max-w-md" showClose={false}>
-        <div className="flex flex-col items-center">
+      <DialogContent 
+        className="sm:max-w-md"
+        // Remove the showClose prop since it doesn't exist in the component's type definition
+        // Instead, we'll override the close button with CSS
+        onInteractOutside={(e) => {
+          // Prevent closing the modal when clicking outside
+          e.preventDefault();
+        }}
+      >
+        <style jsx global>{`
+          /* Hide the close button for this specific dialog */
+          .processing-modal-content .DialogPrimitive__Close {
+            display: none;
+          }
+        `}</style>
+        <div className="flex flex-col items-center processing-modal-content">
           <div className="w-16 h-16 mb-4 relative">
             <div className="absolute inset-0 flex items-center justify-center">
               <svg
