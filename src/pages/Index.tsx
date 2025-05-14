@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import FileUploader from "@/components/FileUploader";
 import TranslationSettings from "@/components/TranslationSettings";
@@ -70,6 +69,9 @@ const Index = () => {
       setProgress(0);
       setCurrentChunk(0);
       
+      console.log("Starting translation process for file:", file.name);
+      console.log("File content length:", file.content.length);
+      
       // Estimate number of chunks based on file size and settings
       const estimatedChunks = Math.ceil(file.content.length / (settings.chunkSize * 1024));
       setTotalChunks(estimatedChunks);
@@ -101,12 +103,18 @@ const Index = () => {
       // Calculate processing time in seconds
       const processingTime = ((endTime - startTime) / 1000).toFixed(2);
       
+      // Get accurate counts of translatable items
+      const itemCount = countTranslatableItems(file.content);
+      const translatedCount = Math.min(itemCount, countModifiedItems(file.content, translatedContent));
+      
+      console.log(`Translation complete. Found ${itemCount} items, translated ${translatedCount}.`);
+      
       // Create translation result with actual data
       const result: TranslationResult = {
         originalContent: file.content,
         translatedContent,
-        itemCount: estimateItemCount(file.content),
-        translatedCount: estimateItemCount(translatedContent),
+        itemCount,
+        translatedCount,
         processingTime: parseFloat(processingTime),
         sourceLanguage,
         targetLanguage
@@ -132,12 +140,65 @@ const Index = () => {
     }
   };
 
-  // Helper function to estimate the number of translatable items in content
-  const estimateItemCount = (content: string): number => {
-    // A simple heuristic - count string literals which are likely to be translatable
-    const stringMatches = content.match(/'[^']+'/g) || [];
-    const doubleQuoteMatches = content.match(/"[^"]+"/g) || [];
-    return stringMatches.length + doubleQuoteMatches.length;
+  // Improved function to count translatable items in content
+  const countTranslatableItems = (content: string): number => {
+    let count = 0;
+    
+    // Count single-quoted strings in array syntax
+    const singleQuoteMatches = content.match(/'[^']+'\s*=>\s*'[^']+'/g);
+    if (singleQuoteMatches) count += singleQuoteMatches.length;
+    
+    // Count mixed quote strings (single key, double value)
+    const mixedQuote1Matches = content.match(/'[^']+'\s*=>\s*"[^"]+"/g);
+    if (mixedQuote1Matches) count += mixedQuote1Matches.length;
+    
+    // Count mixed quote strings (double key, single value)
+    const mixedQuote2Matches = content.match(/"[^"]+"\s*=>\s*'[^']+'/g);
+    if (mixedQuote2Matches) count += mixedQuote2Matches.length;
+    
+    // Count double-quoted strings in array syntax
+    const doubleQuoteMatches = content.match(/"[^"]+"\s*=>\s*"[^"]+"/g);
+    if (doubleQuoteMatches) count += doubleQuoteMatches.length;
+    
+    console.log("Total translatable items found:", count);
+    return count;
+  };
+  
+  // Function to count items that were actually modified in the translation
+  const countModifiedItems = (originalContent: string, translatedContent: string): number => {
+    // This is a simple approach - in a real app, you might need more sophisticated comparison
+    // Extract all values from original and translated content and compare them
+    const extractValues = (content: string): string[] => {
+      const values: string[] = [];
+      
+      // Extract single-quoted values
+      const singleQuoteRegex = /=>\s*'([^']+)'/g;
+      let match;
+      while ((match = singleQuoteRegex.exec(content)) !== null) {
+        values.push(match[1]);
+      }
+      
+      // Extract double-quoted values
+      const doubleQuoteRegex = /=>\s*"([^"]+)"/g;
+      while ((match = doubleQuoteRegex.exec(content)) !== null) {
+        values.push(match[1]);
+      }
+      
+      return values;
+    };
+    
+    const originalValues = extractValues(originalContent);
+    const translatedValues = extractValues(translatedContent);
+    
+    // Count values that are different between original and translated
+    let modifiedCount = 0;
+    for (let i = 0; i < Math.min(originalValues.length, translatedValues.length); i++) {
+      if (originalValues[i] !== translatedValues[i]) {
+        modifiedCount++;
+      }
+    }
+    
+    return modifiedCount;
   };
 
   return (
@@ -168,7 +229,7 @@ const Index = () => {
               </TabsTrigger>
               <TabsTrigger value="settings" className="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 Settings

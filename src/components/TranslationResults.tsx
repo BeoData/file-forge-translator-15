@@ -123,7 +123,10 @@ const TranslationResults = ({ result }: TranslationResultsProps) => {
                 <span className="font-medium"> Target:</span> {getLanguageName(result.targetLanguage)}
               </p>
               <p>
-                <span className="font-medium">Translated items:</span> {result.translatedCount} of {result.itemCount}
+                <span className="font-medium">Translated items:</span> {result.translatedCount} of {result.itemCount} 
+                {result.translatedCount < result.itemCount && (
+                  <span className="text-yellow-600 ml-2">(Some items could not be translated)</span>
+                )}
               </p>
               <p>
                 <span className="font-medium">Processing time:</span> {result.processingTime} seconds
