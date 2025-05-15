@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Globe, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface TranslationSettingsProps {
   settings: {
@@ -30,6 +31,7 @@ interface TranslationSettingsProps {
 
 const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettingsProps) => {
   const [localSettings, setLocalSettings] = useState({ ...settings });
+  const [testingConnection, setTestingConnection] = useState(false);
 
   useEffect(() => {
     // Load saved settings from localStorage if saveSettings is true
@@ -47,6 +49,11 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
     }
   }, []);
 
+  useEffect(() => {
+    // Update local settings when props change (important for the AI button)
+    setLocalSettings(settings);
+  }, [settings]);
+
   const handleChange = (key: string, value: any) => {
     const newSettings = { 
       ...localSettings, 
@@ -58,6 +65,39 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
     
     if (newSettings.saveSettings) {
       localStorage.setItem('translationSettings', JSON.stringify(newSettings));
+    }
+  };
+
+  const testHuggingFaceConnection = async () => {
+    setTestingConnection(true);
+    try {
+      const response = await fetch('/translate.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          source: 'en',
+          target: 'fr'
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.translated) {
+          alert(`Connection successful! Test translation: "${data.translated}"`);
+        } else {
+          alert('Connection established but no translation returned. Check PHP logs.');
+        }
+      } else {
+        alert(`Connection failed with status: ${response.status}`);
+      }
+    } catch (error) {
+      alert(`Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Test connection error:', error);
+    } finally {
+      setTestingConnection(false);
     }
   };
 
@@ -78,9 +118,15 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
             <RadioGroupItem value="google" id="google" />
             <Label htmlFor="google">Google Translate API</Label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 rounded-md p-2 bg-blue-50">
             <RadioGroupItem value="huggingface" id="huggingface" />
-            <Label htmlFor="huggingface">Hugging Face API (PHP)</Label>
+            <Label htmlFor="huggingface" className="flex items-center">
+              <Globe className="h-4 w-4 mr-2 text-blue-500" />
+              Hugging Face API (PHP)
+              {localSettings.service === 'huggingface' && (
+                <span className="ml-2 text-xs text-blue-500 font-normal border border-blue-300 rounded px-1">Active</span>
+              )}
+            </Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="mock" id="mock" />
@@ -88,6 +134,25 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
           </div>
         </RadioGroup>
       </div>
+
+      {localSettings.service === 'huggingface' && (
+        <Alert className="bg-blue-50 border-blue-200">
+          <Globe className="h-4 w-4 text-blue-500" />
+          <AlertTitle>Hugging Face API Active</AlertTitle>
+          <AlertDescription>
+            Using PHP backend to connect to Hugging Face's translation service.
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={testHuggingFaceConnection}
+              disabled={testingConnection}
+              className="mt-2"
+            >
+              {testingConnection ? 'Testing...' : 'Test Connection'}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="api-key">API Key</Label>
@@ -190,7 +255,7 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
               service: 'mock',
               chunkSize: 10,
               apiKey: '',
-              apiEndpoint: 'https://api.deepl.com/v2/translate',
+              apiEndpoint: '/translate.php',
               saveSettings: true
             };
             setLocalSettings(defaultSettings);

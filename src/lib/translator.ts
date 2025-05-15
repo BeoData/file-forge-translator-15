@@ -1,5 +1,7 @@
+
 // This file handles the actual translation functionality
 import { translateWithHuggingFace } from './huggingFaceTranslator';
+import { toast } from "@/hooks/use-toast";
 
 interface TranslationOptions {
   sourceLanguage: string;
@@ -21,6 +23,7 @@ export async function translateFile(
   const { strings, structure } = parseFileContent(content);
   
   console.log(`Found ${strings.length} translatable items in the file`);
+  console.log(`Using translation service: ${options.service}`);
   
   // Determine number of chunks based on the strings array and settings
   const chunkSize = options.chunkProcessing ? 10 : strings.length;
@@ -55,6 +58,11 @@ export async function translateFile(
       
     } catch (error) {
       console.error("Error translating chunk", error);
+      toast({
+        variant: "destructive",
+        title: "Translation Error",
+        description: "Error translating text chunk. Check console for details."
+      });
       throw error;
     }
   }
@@ -136,6 +144,7 @@ async function translateChunk(
 ): Promise<string[]> {
   // Check which translation service to use
   if (options.service === "huggingface") {
+    console.log("Using Hugging Face API for translation...");
     // For Hugging Face API, translate each string individually
     const translations: string[] = [];
     
@@ -151,6 +160,11 @@ async function translateChunk(
         translations.push(translated);
       } catch (error) {
         console.error("Error translating with Hugging Face:", error);
+        toast({
+          variant: "destructive",
+          title: "Hugging Face API Error",
+          description: "Failed to translate text. Using original text."
+        });
         translations.push(string.value); // Use original on error
       }
     }

@@ -24,7 +24,7 @@ export async function translateWithHuggingFace(options: HuggingFaceTranslateOpti
   const { text, source, target, preserveHtml = true, translateComments = false } = options;
   
   try {
-    console.log(`Translating text from ${source} to ${target}...`);
+    console.log(`Translating text from ${source} to ${target} using Hugging Face API...`);
     
     // Path to the PHP file - adjust if needed
     const apiEndpoint = '/translate.php';
@@ -45,15 +45,21 @@ export async function translateWithHuggingFace(options: HuggingFaceTranslateOpti
 
     if (!response.ok) {
       console.error(`HTTP error: ${response.status}`);
-      return text; // Return original text on error
+      throw new Error(`HTTP error: ${response.status}`);
     }
 
     const data: HuggingFaceTranslateResponse = await response.json();
     console.log('Translation received:', data);
     
-    return data.translated || text;
+    if (data.translated) {
+      console.log('Translation successful using model:', data.model_used);
+      return data.translated;
+    } else {
+      console.error('No translation returned from API');
+      return text; // Return original text if no translation
+    }
   } catch (error) {
     console.error('Translation error:', error);
-    return text; // Return original text on error
+    throw error; // Let the calling function handle the error
   }
 }
