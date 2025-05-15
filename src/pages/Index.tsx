@@ -37,10 +37,10 @@ const Index = () => {
     preserveHtml: true,
     translateComments: false,
     chunkProcessing: true,
-    service: "deepl",
+    service: "mock", // Default to mock translations
     chunkSize: 10,
     apiKey: "",
-    apiEndpoint: "https://api.deepl.com/v2/translate",
+    apiEndpoint: "/translate.php", // Default path to PHP file
     saveSettings: true
   });
   

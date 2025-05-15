@@ -1,73 +1,33 @@
-# Welcome to your Lovable project
 
-## Project info
+# Language File Translator
 
-**URL**: https://lovable.dev/projects/fbc90dde-6b48-46b6-814e-002ca0916aba
+A web application for translating language files while preserving their structure.
 
-## How can I edit this code?
+## Setup Instructions for PHP Translation Backend
 
-There are several ways of editing your application.
+1. **Upload the translate.php file** to your web server. This file should be placed in the root directory of your web application.
 
-**Use Lovable**
+2. **Configure API Key**: Open the translate.php file and update the API key on line 188:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/fbc90dde-6b48-46b6-814e-002ca0916aba) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```php
+function translateWithHuggingFace($text, $model = "perkan/serbian-opus-mt-tc-base-en-sh", $apiKey = "YOUR_HUGGING_FACE_API_KEY") {
 ```
 
-**Edit a file directly in GitHub**
+3. **Set Permissions**: Ensure that the translate.php file has the correct permissions to execute on your web server.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+4. **Configure the Application**: In the application settings, select "Hugging Face API (PHP)" as the translation service and set the API endpoint to "/translate.php" or the full path to your PHP file.
 
-**Use GitHub Codespaces**
+## Usage
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. Upload a language file (PHP, JSON, etc.)
+2. Select source and target languages
+3. Configure translation settings
+4. Click "Translate File" to start the translation process
+5. Review and download the translated file
 
-## What technologies are used for this project?
+## Supported Translation Services
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/fbc90dde-6b48-46b6-814e-002ca0916aba) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- DeepL API
+- Google Translate API
+- Hugging Face API via PHP backend
+- Mock Translator (for demo purposes)

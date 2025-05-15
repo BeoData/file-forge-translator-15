@@ -1,4 +1,5 @@
 // This file handles the actual translation functionality
+import { translateWithHuggingFace } from './huggingFaceTranslator';
 
 interface TranslationOptions {
   sourceLanguage: string;
@@ -34,7 +35,7 @@ export async function translateFile(
     const chunk = strings.slice(start, end);
     
     try {
-      // In a real implementation, this would call an actual translation API
+      // Translate each item in the chunk using the selected service
       const chunkTranslations = await translateChunk(
         chunk, 
         options.sourceLanguage, 
@@ -133,35 +134,57 @@ async function translateChunk(
   targetLanguage: string,
   options: TranslationOptions
 ): Promise<string[]> {
-  // This would call the translation API in a real implementation
-  // For demo purposes, we'll use our translation functions
-  
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Actually translate the strings based on target language
-      const translations = strings.map(string => {
-        if (targetLanguage === 'sr') {
-          return translateToSerbian(string.value);
-        }
-        if (targetLanguage === 'es') {
-          return translateToSpanish(string.value);
-        }
-        if (targetLanguage === 'fr') {
-          return translateToFrench(string.value);
-        }
-        if (targetLanguage === 'de') {
-          return translateToGerman(string.value);
-        }
-        if (targetLanguage === 'it') {
-          return translateToItalian(string.value);
-        }
-        // Default - return original if no translation is available
-        return string.value;
-      });
-      
-      resolve(translations);
-    }, 500);
-  });
+  // Check which translation service to use
+  if (options.service === "huggingface") {
+    // For Hugging Face API, translate each string individually
+    const translations: string[] = [];
+    
+    for (const string of strings) {
+      try {
+        const translated = await translateWithHuggingFace({
+          text: string.value,
+          source: sourceLanguage,
+          target: targetLanguage,
+          preserveHtml: options.preserveHtml,
+          translateComments: options.translateComments
+        });
+        translations.push(translated);
+      } catch (error) {
+        console.error("Error translating with Hugging Face:", error);
+        translations.push(string.value); // Use original on error
+      }
+    }
+    
+    return translations;
+  } else {
+    // Use the mock translation functions for "deepl" or other services
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Actually translate the strings based on target language
+        const translations = strings.map(string => {
+          if (targetLanguage === 'sr') {
+            return translateToSerbian(string.value);
+          }
+          if (targetLanguage === 'es') {
+            return translateToSpanish(string.value);
+          }
+          if (targetLanguage === 'fr') {
+            return translateToFrench(string.value);
+          }
+          if (targetLanguage === 'de') {
+            return translateToGerman(string.value);
+          }
+          if (targetLanguage === 'it') {
+            return translateToItalian(string.value);
+          }
+          // Default - return original if no translation is available
+          return string.value;
+        });
+        
+        resolve(translations);
+      }, 500);
+    });
+  }
 }
 
 function reconstructFile(structure: string, translatedStrings: Record<string, string>, options: TranslationOptions): string {
