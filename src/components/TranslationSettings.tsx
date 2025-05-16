@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,15 +72,18 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
   const testHuggingFaceConnection = async () => {
     setTestingConnection(true);
     try {
-      // Direct call to Hugging Face API instead of PHP endpoint
-      const response = await fetch('https://api-inference.huggingface.co/models/Helsinki-NLP/opus-mt-en-fr', {
+      // Test the Serbian model specifically
+      const model = "perkan/serbian-opus-mt-tc-base-en-sh";
+      
+      // Direct call to Hugging Face API
+      const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer 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'
         },
         body: JSON.stringify({
-          inputs: 'Hello world'
+          inputs: 'Hello, this is a test message.'
         })
       });
       
@@ -89,31 +91,35 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
         const data = await response.json();
         let translatedText = '';
         
+        console.log("Serbian translation test response:", data);
+        
         if (Array.isArray(data) && data[0]?.translation_text) {
           translatedText = data[0].translation_text;
         } else if (Array.isArray(data) && data[0]?.generated_text) {
           translatedText = data[0].generated_text;
+        } else if (Array.isArray(data) && typeof data[0] === 'string') {
+          translatedText = data[0];
         } else {
           translatedText = JSON.stringify(data);
         }
         
         toast({
-          title: 'Connection successful!',
-          description: `Test translation: "${translatedText}"`
+          title: 'Veza uspešna!',
+          description: `Test prevod: "${translatedText}"`
         });
       } else {
         const errorData = await response.json().catch(() => null);
         toast({
           variant: "destructive",
-          title: 'Connection failed',
+          title: 'Veza neuspešna',
           description: errorData ? JSON.stringify(errorData) : `Status: ${response.status}`
         });
       }
     } catch (error) {
       toast({
         variant: "destructive",
-        title: 'Connection error',
-        description: error instanceof Error ? error.message : 'Unknown error'
+        title: 'Greška u konekciji',
+        description: error instanceof Error ? error.message : 'Nepoznata greška'
       });
       console.error('Test connection error:', error);
     } finally {
@@ -142,7 +148,7 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
             <RadioGroupItem value="huggingface" id="huggingface" />
             <Label htmlFor="huggingface" className="flex items-center">
               <Globe className="h-4 w-4 mr-2 text-blue-500" />
-              Hugging Face API
+              Hugging Face API - Serbian Model
               {localSettings.service === 'huggingface' && (
                 <span className="ml-2 text-xs text-blue-500 font-normal border border-blue-300 rounded px-1">Active</span>
               )}
@@ -158,9 +164,9 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
       {localSettings.service === 'huggingface' && (
         <Alert className="bg-blue-50 border-blue-200">
           <Globe className="h-4 w-4 text-blue-500" />
-          <AlertTitle>Hugging Face API Active</AlertTitle>
+          <AlertTitle>Hugging Face API aktivna</AlertTitle>
           <AlertDescription>
-            Using Hugging Face's translation service via direct API connection.
+            Koristi se "perkan/serbian-opus-mt-tc-base-en-sh" model za prevođenje na srpski jezik.
             <Button 
               size="sm" 
               variant="outline" 
@@ -168,7 +174,7 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
               disabled={testingConnection}
               className="mt-2"
             >
-              {testingConnection ? 'Testing...' : 'Test Connection'}
+              {testingConnection ? 'Testiranje...' : 'Test konekcije'}
             </Button>
           </AlertDescription>
         </Alert>

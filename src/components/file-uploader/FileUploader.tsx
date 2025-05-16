@@ -63,8 +63,8 @@ const FileUploader = ({
     if (targetLanguage !== 'sr') {
       onTargetLanguageChange('sr');
       toast({
-        title: "Serbian Translation Selected",
-        description: "Target language set to Serbian with Hugging Face AI"
+        title: "Srpski prevod izabran",
+        description: "Ciljni jezik postavljen na srpski sa Hugging Face modelom"
       });
     }
     
@@ -113,7 +113,7 @@ const FileUploader = ({
           onClick={handleTranslateWithHuggingFace}
         >
           <Globe className="h-5 w-5 mr-2" />
-          Prevedi na srpski sa Hugging Face AI
+          Prevedi na srpski sa perkan/serbian-opus-mt-tc-base-en-sh modelom
         </Button>
 
         {/* Regular Translation Button */}

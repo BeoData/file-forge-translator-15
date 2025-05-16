@@ -32,8 +32,10 @@ export async function translateWithHuggingFace(options: HuggingFaceTranslateOpti
     // Determine which model to use based on language pair
     let model = 't5-base'; // default fallback model
     
+    // Use the specific Serbian model when translating to Serbian
     if (source === 'en' && actualTarget === 'sr-Latn') {
       model = 'perkan/serbian-opus-mt-tc-base-en-sh';
+      console.log('Using specialized Serbian translation model');
     } else {
       // Select an appropriate model based on language pair
       const modelMapping: Record<string, string> = {
