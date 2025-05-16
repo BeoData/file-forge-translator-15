@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import FileUploader from "@/components/FileUploader";
+import FileUploader from "@/components/file-uploader/FileUploader";
 import TranslationSettings from "@/components/TranslationSettings";
 import TranslationResults from "@/components/TranslationResults";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
