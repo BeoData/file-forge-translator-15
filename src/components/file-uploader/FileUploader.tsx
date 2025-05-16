@@ -2,11 +2,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileData } from "@/pages/Index";
-import DropZone from "./file-uploader/DropZone";
-import FilePreview from "./file-uploader/FilePreview";
-import LanguageSelector from "./file-uploader/LanguageSelector";
-import TranslationOptions from "./file-uploader/TranslationOptions";
-import { samplePhpContent } from "./file-uploader/sampleData";
+import DropZone from "./DropZone";
+import FilePreview from "./FilePreview";
+import LanguageSelector from "./LanguageSelector";
+import TranslationOptions from "./TranslationOptions";
+import { samplePhpContent } from "./sampleData";
 import { Globe } from "lucide-react";
 
 interface FileUploaderProps {
