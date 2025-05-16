@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import FileUploader from "@/components/file-uploader/FileUploader";
 import TranslationSettings from "@/components/TranslationSettings";
@@ -33,12 +32,12 @@ const Index = () => {
   const [totalChunks, setTotalChunks] = useState(0);
   const [translationResult, setTranslationResult] = useState<TranslationResult | null>(null);
   const [sourceLanguage, setSourceLanguage] = useState("en");
-  const [targetLanguage, setTargetLanguage] = useState("sr");
+  const [targetLanguage, setTargetLanguage] = useState("sr"); // Default to Serbian
   const [settings, setSettings] = useState({
     preserveHtml: true,
     translateComments: false,
     chunkProcessing: true,
-    service: "mock", // Default to mock translations
+    service: "huggingface", // Default to huggingface for Serbian translations
     chunkSize: 10,
     apiKey: "",
     apiEndpoint: "/translate.php", // Default path to PHP file
@@ -72,6 +71,8 @@ const Index = () => {
       
       console.log("Starting translation process for file:", file.name);
       console.log("File content length:", file.content.length);
+      console.log("Target language:", targetLanguage);
+      console.log("Translation service:", settings.service);
       
       // Estimate number of chunks based on file size and settings
       const estimatedChunks = Math.ceil(file.content.length / (settings.chunkSize * 1024));
@@ -125,19 +126,36 @@ const Index = () => {
       setIsProcessing(false);
       setActiveTab("results");
 
-      toast({
-        title: "Translation complete",
-        description: `Successfully translated ${result.translatedCount} out of ${result.itemCount} items.`
-      });
+      // Show toast message in Serbian for Serbian translations
+      if (targetLanguage === 'sr') {
+        toast({
+          title: "Prevod završen",
+          description: `Uspešno prevedeno ${result.translatedCount} od ${result.itemCount} stavki.`
+        });
+      } else {
+        toast({
+          title: "Translation complete",
+          description: `Successfully translated ${result.translatedCount} out of ${result.itemCount} items.`
+        });
+      }
     } catch (error) {
       console.error("Translation failed:", error);
       setIsProcessing(false);
       
-      toast({
-        variant: "destructive",
-        title: "Translation failed",
-        description: "An error occurred during translation. Please try again."
-      });
+      // Show error toast in Serbian for Serbian translations
+      if (targetLanguage === 'sr') {
+        toast({
+          variant: "destructive",
+          title: "Prevod nije uspeo",
+          description: "Došlo je do greške tokom prevoda. Pokušajte ponovo."
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Translation failed",
+          description: "An error occurred during translation. Please try again."
+        });
+      }
     }
   };
 
@@ -211,10 +229,12 @@ const Index = () => {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
             </svg>
-            Language File Translator
+            {targetLanguage === 'sr' ? "Prevodilac jezičkih datoteka" : "Language File Translator"}
           </h1>
           <p className="text-gray-600">
-            Translate language files while preserving the structure. Only values are translated, keys remain intact.
+            {targetLanguage === 'sr' 
+              ? "Prevedite jezičke datoteke dok zadržavate strukturu. Samo vrednosti se prevode, ključevi ostaju netaknuti."
+              : "Translate language files while preserving the structure. Only values are translated, keys remain intact."}
           </p>
         </header>
 
@@ -226,33 +246,33 @@ const Index = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                Upload File
+                {targetLanguage === 'sr' ? "Otpremi datoteku" : "Upload File"}
               </TabsTrigger>
               <TabsTrigger value="settings" className="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                Settings
+                {targetLanguage === 'sr' ? "Podešavanja" : "Settings"}
               </TabsTrigger>
               <TabsTrigger value="results" className="flex items-center" disabled={!translationResult}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Results
+                {targetLanguage === 'sr' ? "Rezultati" : "Results"}
               </TabsTrigger>
             </TabsList>
             
             <TabsContent value="upload" className="p-6">
               <FileUploader 
                 file={file} 
-                onFileChange={handleFileChange} 
+                onFileChange={setFile} 
                 sourceLanguage={sourceLanguage}
                 targetLanguage={targetLanguage}
                 onSourceLanguageChange={setSourceLanguage}
                 onTargetLanguageChange={setTargetLanguage}
                 settings={settings}
-                onSettingsChange={handleSettingsChange}
+                onSettingsChange={setSettings}
                 onTranslate={handleTranslate}
               />
             </TabsContent>
@@ -260,7 +280,7 @@ const Index = () => {
             <TabsContent value="settings" className="p-6">
               <TranslationSettings 
                 settings={settings} 
-                onSettingsChange={handleSettingsChange} 
+                onSettingsChange={setSettings} 
               />
             </TabsContent>
             

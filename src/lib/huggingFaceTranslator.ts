@@ -29,7 +29,7 @@ export async function translateWithHuggingFace(options: HuggingFaceTranslateOpti
     // Path to the PHP file - adjust if needed
     const apiEndpoint = '/translate.php';
     
-    // Force target to sr-Latn when translating to Serbian
+    // Always force target to sr-Latn when translating to Serbian
     const actualTarget = target === 'sr' ? 'sr-Latn' : target;
     
     // Add user-friendly logging

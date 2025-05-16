@@ -2,12 +2,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileData } from "@/pages/Index";
-import DropZone from "./DropZone";
-import FilePreview from "./FilePreview";
-import LanguageSelector from "./LanguageSelector";
-import TranslationOptions from "./TranslationOptions";
-import { samplePhpContent } from "./sampleData";
+import DropZone from "@/components/file-uploader/DropZone";
+import FilePreview from "@/components/file-uploader/FilePreview";
+import LanguageSelector from "@/components/file-uploader/LanguageSelector";
+import TranslationOptions from "@/components/file-uploader/TranslationOptions";
+import { samplePhpContent } from "@/components/file-uploader/sampleData";
 import { Globe } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface FileUploaderProps {
   file: FileData | null;
@@ -50,7 +51,7 @@ const FileUploader = ({
     onFileChange(null);
   };
 
-  // Function to force using Hugging Face API service
+  // Function to force using Hugging Face API service for Serbian translation
   const handleTranslateWithHuggingFace = () => {
     // Update settings to use Hugging Face API with Serbian target language
     onSettingsChange({
@@ -61,6 +62,10 @@ const FileUploader = ({
     // If target language isn't Serbian, set it to Serbian
     if (targetLanguage !== 'sr') {
       onTargetLanguageChange('sr');
+      toast({
+        title: "Serbian Translation Selected",
+        description: "Target language set to Serbian with Hugging Face AI"
+      });
     }
     
     // After a short delay to ensure settings are updated, trigger translation

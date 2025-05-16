@@ -156,7 +156,7 @@ async function translateChunk(
         const translated = await translateWithHuggingFace({
           text: string.value,
           source: sourceLanguage,
-          target: targetLanguage,
+          target: targetLanguage, // Will be converted to sr-Latn in huggingFaceTranslator.ts if target is 'sr'
           preserveHtml: options.preserveHtml,
           translateComments: options.translateComments
         });

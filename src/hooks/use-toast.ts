@@ -1,4 +1,4 @@
-// Import directly from ui/toast
+// Import from UI toast
 import {
   Toast as ToastPrimitive,
   ToastActionElement,
