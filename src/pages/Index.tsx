@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProcessingModal } from "@/components/ProcessingModal";
 import { useToast } from "@/hooks/use-toast";
 import { translateFile } from "@/lib/translator";
+import { ThemeProvider } from "@/components/ui/theme-provider";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export interface FileData {
   name: string;
@@ -221,86 +223,91 @@ const Index = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Header */}
-        <header className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-indigo-700 mb-2 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-            </svg>
-            {targetLanguage === 'sr' ? "Prevodilac jezičkih datoteka" : "Language File Translator"}
-          </h1>
-          <p className="text-gray-600">
-            {targetLanguage === 'sr' 
-              ? "Prevedite jezičke datoteke dok zadržavate strukturu. Samo vrednosti se prevode, ključevi ostaju netaknuti."
-              : "Translate language files while preserving the structure. Only values are translated, keys remain intact."}
-          </p>
-        </header>
+    <ThemeProvider attribute="class" defaultTheme="light">
+      <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
+        <div className="container mx-auto px-4 py-8 max-w-6xl">
+          {/* Header */}
+          <header className="mb-8 text-center relative">
+            <div className="absolute right-4 top-4">
+              <ThemeToggle />
+            </div>
+            <h1 className="text-4xl font-bold text-indigo-700 dark:text-indigo-400 mb-2 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+              </svg>
+              {targetLanguage === 'sr' ? "Prevodilac jezičkih datoteka" : "Language File Translator"}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              {targetLanguage === 'sr' 
+                ? "Prevedite jezičke datoteke dok zadržavate strukturu. Samo vrednosti se prevode, ključevi ostaju netaknuti."
+                : "Translate language files while preserving the structure. Only values are translated, keys remain intact."}
+            </p>
+          </header>
 
-        {/* Main Card */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="border-b w-full justify-start">
-              <TabsTrigger value="upload" className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                {targetLanguage === 'sr' ? "Otpremi datoteku" : "Upload File"}
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {targetLanguage === 'sr' ? "Podešavanja" : "Settings"}
-              </TabsTrigger>
-              <TabsTrigger value="results" className="flex items-center" disabled={!translationResult}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                {targetLanguage === 'sr' ? "Rezultati" : "Results"}
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="upload" className="p-6">
-              <FileUploader 
-                file={file} 
-                onFileChange={setFile} 
-                sourceLanguage={sourceLanguage}
-                targetLanguage={targetLanguage}
-                onSourceLanguageChange={setSourceLanguage}
-                onTargetLanguageChange={setTargetLanguage}
-                settings={settings}
-                onSettingsChange={setSettings}
-                onTranslate={handleTranslate}
-              />
-            </TabsContent>
-            
-            <TabsContent value="settings" className="p-6">
-              <TranslationSettings 
-                settings={settings} 
-                onSettingsChange={setSettings} 
-              />
-            </TabsContent>
-            
-            <TabsContent value="results" className="p-6">
-              {translationResult && (
-                <TranslationResults result={translationResult} />
-              )}
-            </TabsContent>
-          </Tabs>
+          {/* Main Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="border-b w-full justify-start">
+                <TabsTrigger value="upload" className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  {targetLanguage === 'sr' ? "Otpremi datoteku" : "Upload File"}
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {targetLanguage === 'sr' ? "Podešavanja" : "Settings"}
+                </TabsTrigger>
+                <TabsTrigger value="results" className="flex items-center" disabled={!translationResult}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  {targetLanguage === 'sr' ? "Rezultati" : "Results"}
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="upload" className="p-6">
+                <FileUploader 
+                  file={file} 
+                  onFileChange={setFile} 
+                  sourceLanguage={sourceLanguage}
+                  targetLanguage={targetLanguage}
+                  onSourceLanguageChange={setSourceLanguage}
+                  onTargetLanguageChange={setTargetLanguage}
+                  settings={settings}
+                  onSettingsChange={setSettings}
+                  onTranslate={handleTranslate}
+                />
+              </TabsContent>
+              
+              <TabsContent value="settings" className="p-6">
+                <TranslationSettings 
+                  settings={settings} 
+                  onSettingsChange={setSettings} 
+                />
+              </TabsContent>
+              
+              <TabsContent value="results" className="p-6">
+                {translationResult && (
+                  <TranslationResults result={translationResult} />
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
+        
+        {/* Processing Modal */}
+        <ProcessingModal 
+          isOpen={isProcessing}
+          progress={progress}
+          currentChunk={currentChunk}
+          totalChunks={totalChunks}
+        />
       </div>
-      
-      {/* Processing Modal */}
-      <ProcessingModal 
-        isOpen={isProcessing}
-        progress={progress}
-        currentChunk={currentChunk}
-        totalChunks={totalChunks}
-      />
-    </div>
+    </ThemeProvider>
   );
 };
 

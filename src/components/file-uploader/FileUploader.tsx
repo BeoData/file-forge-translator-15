@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileData } from "@/pages/Index";
@@ -119,7 +118,7 @@ const FileUploader = ({
         {/* Regular Translation Button */}
         <Button 
           variant="outline"
-          className="w-full"
+          className="w-full dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
           size="lg"
           disabled={!file}
           onClick={onTranslate}
