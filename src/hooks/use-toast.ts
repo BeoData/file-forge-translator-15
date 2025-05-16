@@ -1,19 +1,21 @@
 // Import directly from ui/toast
 import {
-  Toast,
+  Toast as ToastPrimitive,
   ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast"
 
-import { useToast as useToastPrimitive } from "@radix-ui/react-toast"
 import * as React from "react"
 
-type ToasterToast = Toast & {
+type ToasterToast = {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
-}
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  variant?: "default" | "destructive"
+} & Omit<ToastProps, "children">
 
 const TOAST_LIMIT = 5
 const TOAST_REMOVE_DELAY = 1000000
