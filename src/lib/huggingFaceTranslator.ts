@@ -29,6 +29,13 @@ export async function translateWithHuggingFace(options: HuggingFaceTranslateOpti
     // Path to the PHP file - adjust if needed
     const apiEndpoint = '/translate.php';
     
+    // Force target to sr-Latn when translating to Serbian
+    const actualTarget = target === 'sr' ? 'sr-Latn' : target;
+    
+    // Add user-friendly logging
+    console.log(`Using Hugging Face API endpoint: ${apiEndpoint}`);
+    console.log(`Using model: perkan/serbian-opus-mt-tc-base-en-sh for Serbian translation`);
+    
     const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
@@ -37,9 +44,11 @@ export async function translateWithHuggingFace(options: HuggingFaceTranslateOpti
       body: JSON.stringify({
         text,
         source,
-        target,
+        target: actualTarget,
         preserve_html: preserveHtml,
-        translate_comments: translateComments
+        translate_comments: translateComments,
+        force_model: source === 'en' && actualTarget === 'sr-Latn' ? 'perkan/serbian-opus-mt-tc-base-en-sh' : undefined,
+        api_key: "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"
       })
     });
 

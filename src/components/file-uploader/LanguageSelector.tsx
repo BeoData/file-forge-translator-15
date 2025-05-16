@@ -52,7 +52,7 @@ const LanguageSelector = ({
             <SelectItem value="fr">French</SelectItem>
             <SelectItem value="de">German</SelectItem>
             <SelectItem value="it">Italian</SelectItem>
-            <SelectItem value="sr">Serbian (Latin)</SelectItem>
+            <SelectItem value="sr" className="font-medium text-blue-600 bg-blue-50">Serbian (Latin)</SelectItem>
           </SelectContent>
         </Select>
       </div>

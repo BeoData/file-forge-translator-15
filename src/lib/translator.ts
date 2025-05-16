@@ -150,6 +150,9 @@ async function translateChunk(
     
     for (const string of strings) {
       try {
+        // For debugging
+        console.log(`Translating string: "${string.value}" from ${sourceLanguage} to ${targetLanguage}`);
+        
         const translated = await translateWithHuggingFace({
           text: string.value,
           source: sourceLanguage,
@@ -157,6 +160,8 @@ async function translateChunk(
           preserveHtml: options.preserveHtml,
           translateComments: options.translateComments
         });
+        
+        console.log(`Translation result: "${translated}"`);
         translations.push(translated);
       } catch (error) {
         console.error("Error translating with Hugging Face:", error);

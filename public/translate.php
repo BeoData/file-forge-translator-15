@@ -1,3 +1,4 @@
+
 <?php
 /**
  * PHP Translation Script using Hugging Face API
@@ -39,6 +40,11 @@ $source = isset($input['source']) ? $input['source'] : 'en';
 $target = isset($input['target']) ? $input['target'] : 'sr-Latn';
 $preserveHtml = isset($input['preserve_html']) ? $input['preserve_html'] : true;
 $translateComments = isset($input['translate_comments']) ? $input['translate_comments'] : false;
+$forceModel = isset($input['force_model']) ? $input['force_model'] : null;
+$apiKey = isset($input['api_key']) ? $input['api_key'] : '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';
+
+// Log the parameters
+file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - Parameters: source=$source, target=$target" . "\n", FILE_APPEND);
 
 // Define model mapping for language pairs
 $modelMapping = [
@@ -64,11 +70,22 @@ $modelMapping = [
     'en-any' => 't5-base'
 ];
 
-// For languages not in our mapping, use the general model
-$langPair = "$source-$target";
-$model = isset($modelMapping[$langPair]) ? $modelMapping[$langPair] : 
-         ($source === 'en' ? $modelMapping['en-any'] : 
-         ($target === 'en' ? $modelMapping['any-en'] : $modelMapping['en-any']));
+// If source is 'en' and target is 'sr-Latn', use the Serbian model explicitly
+if ($source === 'en' && $target === 'sr-Latn') {
+    $model = 'perkan/serbian-opus-mt-tc-base-en-sh';
+} else {
+    // For languages not in our mapping, use the general model
+    $langPair = "$source-$target";
+    $model = isset($modelMapping[$langPair]) ? $modelMapping[$langPair] : 
+             ($source === 'en' ? $modelMapping['en-any'] : 
+             ($target === 'en' ? $modelMapping['any-en'] : $modelMapping['en-any']));
+}
+
+// If a model was forced via API call, use that instead
+if ($forceModel) {
+    $model = $forceModel;
+    file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - Using forced model: $model" . "\n", FILE_APPEND);
+}
 
 // Process HTML tags if needed
 $htmlTags = [];
@@ -84,8 +101,12 @@ if ($preserveHtml) {
     }
 }
 
+// Log the model being used
+file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - Using model: $model" . "\n", FILE_APPEND);
+file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - Text to translate: $text" . "\n", FILE_APPEND);
+
 // Translate the text
-$translated = translateWithHuggingFace($text, $model);
+$translated = translateWithHuggingFace($text, $model, $apiKey);
 
 // Restore HTML tags if they were extracted
 if ($preserveHtml && !empty($htmlTags)) {
@@ -97,7 +118,8 @@ if ($preserveHtml && !empty($htmlTags)) {
 // Directly handle common fallback cases
 if ($model === 'perkan/serbian-opus-mt-tc-base-en-sh' && $text === $translated) {
     // If Serbian model didn't translate, try the T5 model as fallback
-    $translated = translateWithHuggingFace($text, 't5-base');
+    file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - Serbian model failed, trying T5 fallback" . "\n", FILE_APPEND);
+    $translated = translateWithHuggingFace($text, 't5-base', $apiKey);
 }
 
 // Sanity check - if translation is empty, return original text
@@ -106,7 +128,7 @@ if (empty($translated) || $translated === "API Error: Empty or invalid response"
 }
 
 // Log the final translation
-file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . ' - Final translation: ' . $translated . "\n", FILE_APPEND);
+file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - Final translation: $translated" . "\n", FILE_APPEND);
 
 // Return the translation result
 echo json_encode([
@@ -129,6 +151,9 @@ exit;
 function translateWithHuggingFace($text, $model = "perkan/serbian-opus-mt-tc-base-en-sh", $apiKey = "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") {
     // API endpoint URL for the specified model
     $apiUrl = "https://api-inference.huggingface.co/models/" . $model;
+    
+    // Log API call
+    file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - Calling Hugging Face API: $apiUrl" . "\n", FILE_APPEND);
     
     // Set up cURL session
     $curl = curl_init();
@@ -167,25 +192,25 @@ function translateWithHuggingFace($text, $model = "perkan/serbian-opus-mt-tc-bas
     
     // Check for errors
     if ($err) {
-        error_log("cURL Error: " . $err);
+        file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - cURL Error: $err" . "\n", FILE_APPEND);
         return "Error: " . $err;
     }
     
     // Check HTTP status code
     if ($httpCode != 200) {
-        error_log("HTTP Error: " . $httpCode . " Response: " . $response);
+        file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - HTTP Error: $httpCode Response: $response" . "\n", FILE_APPEND);
         return "HTTP Error: " . $httpCode;
     }
     
     // Debug: Log raw response
-    error_log("Raw API response: " . $response);
+    file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - Raw API response: $response" . "\n", FILE_APPEND);
     
     // Parse response
     $result = json_decode($response, true);
     
     // Check if the model is still loading
     if (is_array($result) && isset($result['error']) && strpos($result['error'], 'loading') !== false) {
-        error_log("Model is loading. Waiting and retrying...");
+        file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - Model is loading. Waiting and retrying..." . "\n", FILE_APPEND);
         sleep(2); // Wait for the model to load
         return translateWithHuggingFace($text, $model, $apiKey);
     }
@@ -200,7 +225,7 @@ function translateWithHuggingFace($text, $model = "perkan/serbian-opus-mt-tc-bas
         } elseif (isset($result[0]['generated_text'])) {
             return $result[0]['generated_text'];
         } else {
-            error_log("Unexpected response format. Raw response: " . $response);
+            file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - Unexpected response format. Raw response: $response" . "\n", FILE_APPEND);
             // Some models return just an array with the translation
             if (count($result) == 1 && is_string($result[0])) {
                 return $result[0];
@@ -208,7 +233,7 @@ function translateWithHuggingFace($text, $model = "perkan/serbian-opus-mt-tc-bas
             return "Translation API error: Unexpected format";
         }
     } else {
-        error_log("Failed to decode response as JSON or null result. Raw response: " . $response);
+        file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - Failed to decode response as JSON or null result. Raw response: $response" . "\n", FILE_APPEND);
         
         // If response is plain text, just return it as is (some models might return plain text)
         if (is_string($response) && !empty($response) && substr($response, 0, 1) != "{" && substr($response, 0, 1) != "[") {
@@ -217,6 +242,7 @@ function translateWithHuggingFace($text, $model = "perkan/serbian-opus-mt-tc-bas
         
         // Model might be loading - try again
         if (strpos($response, "loading") !== false || strpos($response, "Loading") !== false) {
+            file_put_contents('debug_log.txt', date('Y-m-d H:i:s') . " - Model is loading, retrying..." . "\n", FILE_APPEND);
             sleep(2); // Wait a bit for the model to load
             return translateWithHuggingFace($text, $model, $apiKey);
         }
