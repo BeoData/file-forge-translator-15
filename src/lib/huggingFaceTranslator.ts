@@ -16,7 +16,7 @@ interface HuggingFaceTranslateResponse {
 }
 
 /**
- * Translates text using the Hugging Face API through the PHP proxy
+ * Translates text using the Hugging Face API
  * @param options Translation options
  * @returns The translated text or the original text if translation fails
  */
@@ -26,29 +26,61 @@ export async function translateWithHuggingFace(options: HuggingFaceTranslateOpti
   try {
     console.log(`Translating text from ${source} to ${target} using Hugging Face API...`);
     
-    // Path to the PHP file - adjust if needed
-    const apiEndpoint = '/translate.php';
-    
     // Always force target to sr-Latn when translating to Serbian
     const actualTarget = target === 'sr' ? 'sr-Latn' : target;
     
-    // Add user-friendly logging
-    console.log(`Using Hugging Face API endpoint: ${apiEndpoint}`);
-    console.log(`Using model: perkan/serbian-opus-mt-tc-base-en-sh for Serbian translation`);
+    // Determine which model to use based on language pair
+    let model = 't5-base'; // default fallback model
     
-    const response = await fetch(apiEndpoint, {
+    if (source === 'en' && actualTarget === 'sr-Latn') {
+      model = 'perkan/serbian-opus-mt-tc-base-en-sh';
+    } else {
+      // Select an appropriate model based on language pair
+      const modelMapping: Record<string, string> = {
+        'en-fr': 'Helsinki-NLP/opus-mt-en-fr',
+        'fr-en': 'Helsinki-NLP/opus-mt-fr-en',
+        'en-de': 'Helsinki-NLP/opus-mt-en-de',
+        'de-en': 'Helsinki-NLP/opus-mt-de-en',
+        'en-es': 'Helsinki-NLP/opus-mt-en-es',
+        'es-en': 'Helsinki-NLP/opus-mt-es-en'
+      };
+      
+      const langPair = `${source}-${actualTarget}`;
+      if (modelMapping[langPair]) {
+        model = modelMapping[langPair];
+      }
+    }
+    
+    console.log(`Using model: ${model} for translation`);
+    
+    // Handle HTML content if preserveHtml is enabled
+    let processedText = text;
+    const htmlTags: string[] = [];
+    
+    if (preserveHtml) {
+      // Extract HTML tags and replace them with placeholders
+      const pattern = /<[^>]+>/g;
+      const matches = text.match(pattern);
+      
+      if (matches && matches.length > 0) {
+        htmlTags.push(...matches);
+        matches.forEach((tag, index) => {
+          processedText = processedText.replace(tag, `{{HTML_TAG_${index}}}`);
+        });
+      }
+    }
+    
+    // Direct call to Hugging Face Inference API
+    const apiUrl = `https://api-inference.huggingface.co/models/${model}`;
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer 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'
       },
       body: JSON.stringify({
-        text,
-        source,
-        target: actualTarget,
-        preserve_html: preserveHtml,
-        translate_comments: translateComments,
-        force_model: source === 'en' && actualTarget === 'sr-Latn' ? 'perkan/serbian-opus-mt-tc-base-en-sh' : undefined,
-        api_key: "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"
+        inputs: processedText
       })
     });
 
@@ -57,18 +89,37 @@ export async function translateWithHuggingFace(options: HuggingFaceTranslateOpti
       throw new Error(`HTTP error: ${response.status}`);
     }
 
-    const data: HuggingFaceTranslateResponse = await response.json();
-    console.log('Translation received:', data);
+    // Parse the response based on the model type
+    const result = await response.json();
+    console.log('Translation API response:', result);
     
-    if (data.translated) {
-      console.log('Translation successful using model:', data.model_used);
-      return data.translated;
+    let translatedText = '';
+    
+    if (Array.isArray(result) && result[0]?.translation_text) {
+      translatedText = result[0].translation_text;
+    } else if (Array.isArray(result) && result[0]?.generated_text) {
+      translatedText = result[0].generated_text;
+    } else if (typeof result === 'object' && result.translation_text) {
+      translatedText = result.translation_text;
+    } else if (Array.isArray(result) && typeof result[0] === 'string') {
+      translatedText = result[0];
     } else {
-      console.error('No translation returned from API');
-      return text; // Return original text if no translation
+      console.error('Unexpected API response format:', result);
+      return text; // Return original text as fallback
     }
+    
+    // Restore HTML tags if they were extracted
+    if (preserveHtml && htmlTags.length > 0) {
+      htmlTags.forEach((tag, index) => {
+        translatedText = translatedText.replace(`{{HTML_TAG_${index}}}`, tag);
+      });
+    }
+    
+    console.log('Translation successful:', translatedText);
+    return translatedText;
+    
   } catch (error) {
     console.error('Translation error:', error);
-    throw error; // Let the calling function handle the error
+    return text; // Return original text on error
   }
 }

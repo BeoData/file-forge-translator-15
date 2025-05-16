@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Globe, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "@/hooks/use-toast";
 
 interface TranslationSettingsProps {
   settings: {
@@ -71,30 +73,48 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
   const testHuggingFaceConnection = async () => {
     setTestingConnection(true);
     try {
-      const response = await fetch('/translate.php', {
+      // Direct call to Hugging Face API instead of PHP endpoint
+      const response = await fetch('https://api-inference.huggingface.co/models/Helsinki-NLP/opus-mt-en-fr', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer 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'
         },
         body: JSON.stringify({
-          text: 'Hello world',
-          source: 'en',
-          target: 'fr'
+          inputs: 'Hello world'
         })
       });
       
       if (response.ok) {
         const data = await response.json();
-        if (data.translated) {
-          alert(`Connection successful! Test translation: "${data.translated}"`);
+        let translatedText = '';
+        
+        if (Array.isArray(data) && data[0]?.translation_text) {
+          translatedText = data[0].translation_text;
+        } else if (Array.isArray(data) && data[0]?.generated_text) {
+          translatedText = data[0].generated_text;
         } else {
-          alert('Connection established but no translation returned. Check PHP logs.');
+          translatedText = JSON.stringify(data);
         }
+        
+        toast({
+          title: 'Connection successful!',
+          description: `Test translation: "${translatedText}"`
+        });
       } else {
-        alert(`Connection failed with status: ${response.status}`);
+        const errorData = await response.json().catch(() => null);
+        toast({
+          variant: "destructive",
+          title: 'Connection failed',
+          description: errorData ? JSON.stringify(errorData) : `Status: ${response.status}`
+        });
       }
     } catch (error) {
-      alert(`Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast({
+        variant: "destructive",
+        title: 'Connection error',
+        description: error instanceof Error ? error.message : 'Unknown error'
+      });
       console.error('Test connection error:', error);
     } finally {
       setTestingConnection(false);
@@ -122,7 +142,7 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
             <RadioGroupItem value="huggingface" id="huggingface" />
             <Label htmlFor="huggingface" className="flex items-center">
               <Globe className="h-4 w-4 mr-2 text-blue-500" />
-              Hugging Face API (PHP)
+              Hugging Face API
               {localSettings.service === 'huggingface' && (
                 <span className="ml-2 text-xs text-blue-500 font-normal border border-blue-300 rounded px-1">Active</span>
               )}
@@ -140,7 +160,7 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
           <Globe className="h-4 w-4 text-blue-500" />
           <AlertTitle>Hugging Face API Active</AlertTitle>
           <AlertDescription>
-            Using PHP backend to connect to Hugging Face's translation service.
+            Using Hugging Face's translation service via direct API connection.
             <Button 
               size="sm" 
               variant="outline" 
@@ -164,7 +184,7 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
           placeholder="Enter your API key"
         />
         <p className="text-sm text-gray-500">
-          Required for DeepL, Google, and Hugging Face API.
+          Required for DeepL, Google, and custom Hugging Face API keys.
         </p>
       </div>
 
@@ -178,7 +198,7 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
         />
         <p className="text-sm text-gray-500">
           {localSettings.service === 'huggingface'
-            ? "Path to translate.php file (e.g., /translate.php)"
+            ? "Optional custom Hugging Face API endpoint"
             : "The API endpoint for the selected translation service"}
         </p>
       </div>
@@ -252,10 +272,10 @@ const TranslationSettings = ({ settings, onSettingsChange }: TranslationSettings
               preserveHtml: true,
               translateComments: false,
               chunkProcessing: true,
-              service: 'mock',
+              service: 'huggingface',
               chunkSize: 10,
               apiKey: '',
-              apiEndpoint: '/translate.php',
+              apiEndpoint: '',
               saveSettings: true
             };
             setLocalSettings(defaultSettings);

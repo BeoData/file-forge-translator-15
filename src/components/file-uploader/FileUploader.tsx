@@ -105,7 +105,20 @@ const FileUploader = ({
 
       {/* Translate Buttons */}
       <div className="flex flex-col space-y-3 mt-4">
+        {/* Serbian Translation Button - Made more prominent */}
         <Button 
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          size="lg"
+          disabled={!file}
+          onClick={handleTranslateWithHuggingFace}
+        >
+          <Globe className="h-5 w-5 mr-2" />
+          Prevedi na srpski sa Hugging Face AI
+        </Button>
+
+        {/* Regular Translation Button */}
+        <Button 
+          variant="outline"
           className="w-full"
           size="lg"
           disabled={!file}
@@ -125,18 +138,7 @@ const FileUploader = ({
               d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" 
             />
           </svg>
-          Translate File
-        </Button>
-
-        <Button 
-          variant="outline"
-          className="w-full bg-blue-50 hover:bg-blue-100 border-blue-300 text-blue-700"
-          size="lg"
-          disabled={!file}
-          onClick={handleTranslateWithHuggingFace}
-        >
-          <Globe className="h-5 w-5 mr-2" />
-          Translate to Serbian with Hugging Face AI
+          {targetLanguage === 'sr' ? "Prevedi datoteku" : "Translate File"}
         </Button>
       </div>
     </div>
